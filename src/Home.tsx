@@ -5,6 +5,8 @@ import {
   Badge,
   Chip,
   IconButton,
+  ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
   Box,
@@ -19,6 +21,8 @@ import {
   TextField,
 } from '@material-ui/core';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
+// import RefreshIcon from '@material-ui/icons/Refresh';
+// import { BuyIcon, SellIcon } from './icon';
 import { Stock, net } from './api/index';
 
 const BUY = 'BUY';
@@ -31,6 +35,7 @@ export default function Home() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [actionType, setActionType] = useState<IStockActionType | null>(null);
   const [anchor, setAnchor] = useState<null | HTMLButtonElement>(null);
+  const [openAlertDialog, setOpenAlertDialog] = useState(false);
   // const [updateID, setUpdateID] = useState(Math.random());
 
   const nameRef: RefObject<any> = useRef(null);
@@ -41,9 +46,13 @@ export default function Home() {
     net.r(Stock).then(stocks => {
       for (let stock of stocks) {
         stock.setRealtimePrice().then(() => {
-          if (stock.glance.share > 0) {
-            setStocks(stocks => stocks.concat(stock));
-          }
+          setStocks(stocks =>
+            stocks.concat(stock).sort((a, b) => {
+              return b.glance.money - a.glance.money;
+            })
+          );
+          // if (stock.glance.share > 0) {
+          // }
         });
       }
     });
@@ -76,8 +85,17 @@ export default function Home() {
 
   function updateStock() {
     stockRef.current?.setRealtimePrice().then(() => {
-      setAnchor(null)
+      setAnchor(null);
     });
+  }
+
+  function clear() {
+    if (stockRef.current) {
+      stockRef.current.clear();
+      setAnchor(null);
+      setOpenAlertDialog(false);
+      net.u(Stock, stockRef.current);
+    }
   }
 
   return (
@@ -97,9 +115,18 @@ export default function Home() {
           setAnchor(null);
         }}
       >
-        <MenuItem onClick={() => setActionType(BUY)}>添加买点</MenuItem>
-        <MenuItem onClick={() => setActionType(SELL)}>添加卖点</MenuItem>
-        <MenuItem onClick={updateStock}>获取最新价格</MenuItem>
+        <MenuItem onClick={() => setActionType(BUY)}>
+          <ListItemText>添加买点</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => setActionType(SELL)}>
+          <ListItemText>添加买点</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => setOpenAlertDialog(true)}>
+          <ListItemText>清仓</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={updateStock}>
+          <ListItemText>获取最新价格</ListItemText>
+        </MenuItem>
       </Menu>
       <Box mt={1}>
         {stocks.map(stock => (
@@ -134,7 +161,6 @@ export default function Home() {
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              <Divider sx={{ marginBottom: '16px' }}>持仓分析</Divider>
               <Points stock={stock}></Points>
             </AccordionDetails>
           </Accordion>
@@ -167,6 +193,21 @@ export default function Home() {
             取消
           </Button>
           <Button onClick={confirm}>确认</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={openAlertDialog} maxWidth="xs" fullWidth>
+        <DialogContent>清仓将会删除所有数据！</DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setOpenAlertDialog(false);
+            }}
+          >
+            取消
+          </Button>
+          <Button color="error" onClick={clear}>
+            确认
+          </Button>
         </DialogActions>
       </Dialog>
       <AddPoint type={actionType} onClose={() => setActionType(null)} onAdd={handleAdd} />
@@ -216,6 +257,7 @@ function AddPoint(props: {
 function Points(props: { stock: Stock }) {
   return (
     <Box sx={{ flexWrap: 'wrap' }}>
+      <Divider sx={{ marginBottom: '16px' }}>持仓</Divider>
       {props.stock.entries
         .filter(_ => _.share > 0)
         .map((_, i) => {
@@ -236,13 +278,13 @@ function Points(props: { stock: Stock }) {
             </Badge>
           );
         })}
-      <Divider sx={{ marginTop: '16px', marginBottom: '16px' }}>已清仓</Divider>
+      <Divider sx={{ marginTop: '16px', marginBottom: '16px' }}>卖出</Divider>
       {props.stock.entries
         .filter(_ => _.share === 0)
         .map((_, i) => {
           return (
             <Badge
-              badgeContent="清仓"
+              badgeContent={0}
               color="primary"
               key={i}
               sx={{ marginRight: '12px', marginTop: '8px' }}

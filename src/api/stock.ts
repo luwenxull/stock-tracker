@@ -1,4 +1,5 @@
 import API from './API';
+import { num } from '../util'
 
 interface IStockExit {
   price: number;
@@ -49,11 +50,22 @@ export class Stock extends API {
         floatingProfit,
         share,
         money,
-        ratio: Number((floatingProfit / money * 100).toFixed(2)),
-        costPrice: Number(((money - floatingProfit ) / share).toFixed(3)),
+        ratio: num((floatingProfit / money * 100).toFixed(2)),
+        costPrice: num(((money - floatingProfit ) / share).toFixed(3)),
       };
     } 
     return this
+  }
+
+  public clear() {
+    this.entries = []
+    this.glance = {
+      floatingProfit: 0,
+      share: 0,
+      ratio: 0,
+      money: 0,
+      costPrice: 0,
+    }
   }
 
   // call this first
