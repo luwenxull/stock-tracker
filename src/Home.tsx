@@ -46,11 +46,7 @@ export default function Home() {
     net.r(Stock).then(stocks => {
       for (let stock of stocks) {
         stock.setRealtimePrice().then(() => {
-          setStocks(stocks =>
-            stocks.concat(stock).sort((a, b) => {
-              return b.glance.money - a.glance.money;
-            })
-          );
+          setStocks(stocks => stocks.concat(stock));
           // if (stock.glance.share > 0) {
           // }
         });
@@ -119,7 +115,7 @@ export default function Home() {
           <ListItemText>添加买点</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => setActionType(SELL)}>
-          <ListItemText>添加买点</ListItemText>
+          <ListItemText>添加卖点</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => setOpenAlertDialog(true)}>
           <ListItemText>清仓</ListItemText>
@@ -129,42 +125,46 @@ export default function Home() {
         </MenuItem>
       </Menu>
       <Box mt={1}>
-        {stocks.map(stock => (
-          <Accordion key={stock.code}>
-            <AccordionSummary>
-              <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
-                <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                  <span>{stock.name}</span>
-                  <Chip size="small" label={`当前股价：${stock.realtimePrice}`} />
-                  <Chip size="small" label={`持仓金额：${stock.glance.money}`} />
-                  <Chip size="small" label={`持仓成本：${stock.glance.costPrice}`} />
-                  <Chip
-                    size="small"
-                    label={`浮动盈亏：${stock.glance.floatingProfit}`}
-                    color={stock.glance.floatingProfit > 0 ? 'error' : 'success'}
-                  />
-                  <Chip
-                    size="small"
-                    label={`盈亏比例：${stock.glance.ratio}%`}
-                    color={stock.glance.floatingProfit > 0 ? 'error' : 'success'}
-                  />
-                </Stack>
-                <IconButton
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                    e.stopPropagation();
-                    stockRef.current = stock;
-                    setAnchor(e.currentTarget);
-                  }}
-                >
-                  <MoreVertIcon></MoreVertIcon>
-                </IconButton>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Points stock={stock}></Points>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+        {stocks
+          .sort((a, b) => {
+            return b.glance.money - a.glance.money;
+          })
+          .map(stock => (
+            <Accordion key={stock.code}>
+              <AccordionSummary>
+                <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                    <span>{stock.name}</span>
+                    <Chip size="small" label={`当前股价：${stock.realtimePrice}`} />
+                    <Chip size="small" label={`持仓金额：${stock.glance.money}`} />
+                    <Chip size="small" label={`持仓成本：${stock.glance.costPrice}`} />
+                    <Chip
+                      size="small"
+                      label={`浮动盈亏：${stock.glance.floatingProfit}`}
+                      color={stock.glance.floatingProfit > 0 ? 'error' : 'success'}
+                    />
+                    <Chip
+                      size="small"
+                      label={`盈亏比例：${stock.glance.ratio}%`}
+                      color={stock.glance.floatingProfit > 0 ? 'error' : 'success'}
+                    />
+                  </Stack>
+                  <IconButton
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                      e.stopPropagation();
+                      stockRef.current = stock;
+                      setAnchor(e.currentTarget);
+                    }}
+                  >
+                    <MoreVertIcon></MoreVertIcon>
+                  </IconButton>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Points stock={stock}></Points>
+              </AccordionDetails>
+            </Accordion>
+          ))}
       </Box>
       <Dialog open={open} maxWidth="xs" fullWidth>
         <DialogTitle>添加追踪股票</DialogTitle>
@@ -272,7 +272,7 @@ function Points(props: { stock: Stock }) {
                 variant="outlined"
                 color={(_.floatingProfit || 0) > 0 ? 'error' : 'success'}
                 label={`入场价格：${_.price}；${
-                  _.share === 0 ? '' : '份额' + _.share + '；'
+                  _.share === 0 ? '' : '份额：' + _.share + '；'
                 }浮动盈亏：${_.floatingProfit}`}
               />
             </Badge>
@@ -293,7 +293,7 @@ function Points(props: { stock: Stock }) {
                 variant="outlined"
                 color={(_.floatingProfit || 0) > 0 ? 'error' : 'success'}
                 label={`入场价格：${_.price}；${
-                  _.share === 0 ? '' : '份额' + _.share + '；'
+                  _.share === 0 ? '' : '份额：' + _.share + '；'
                 }盈亏：${_.floatingProfit}`}
               />
             </Badge>
