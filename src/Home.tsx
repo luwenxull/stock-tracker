@@ -135,7 +135,24 @@ export default function Home() {
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
                   <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                     <span>{stock.name}</span>
-                    <Chip size="small" label={`当前股价：${stock.realtimePrice}`} />
+                    <Chip
+                      size="small"
+                      label={`当前股价：${stock.realtimePrice}`}
+                      color={
+                        (stock.lastPrice as number) > (stock.realtimePrice as number)
+                          ? 'success'
+                          : 'error'
+                      }
+                    />
+                    <Chip 
+                      size="small"
+                      label={`涨跌幅：${stock.rise}`} 
+                      color={
+                        (stock.lastPrice as number) > (stock.realtimePrice as number)
+                          ? 'success'
+                          : 'error'
+                      }
+                    />
                     <Chip size="small" label={`持仓金额：${stock.glance.money}`} />
                     <Chip size="small" label={`持仓成本：${stock.glance.costPrice}`} />
                     <Chip

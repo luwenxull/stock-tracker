@@ -25,6 +25,8 @@ interface IStockGlanceResult {
 export class Stock extends API {
   public entries: IStockEntry[] = [];
   public realtimePrice?: number;
+  public lastPrice?: number;
+  public rise?: string;
   // public exits: IStockEntry[] = [];
   public glance: IStockGlanceResult = {
     floatingProfit: 0,
@@ -77,11 +79,12 @@ export class Stock extends API {
       script.src = `https://hq.sinajs.cn/list=${this.code.toLowerCase()}`;
       script.onload = () => {
         const values = (window as any)[`hq_str_${this.code.toLowerCase()}`].split(',');
-        const price = values[3];
         script.remove();
-        this.realtimePrice = price;
-        this.makeGlance()
-        resolve(price);
+        this.realtimePrice = values[3];
+        this.lastPrice = values[2];
+        this.rise = ((values[3] - values[2]) / values[2] * 100).toFixed(2) + '%';
+        this.makeGlance();
+        resolve(this);
       };
       document.head.append(script);
     });
