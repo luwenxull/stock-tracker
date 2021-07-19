@@ -1,11 +1,12 @@
-import React, { Fragment, MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
+import React, { MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
 import {
   Divider,
   Stack,
   Badge,
   Chip,
   IconButton,
-  ListItemIcon,
+  // ListItemIcon,
+  Fab,
   ListItemText,
   Menu,
   MenuItem,
@@ -23,7 +24,9 @@ import {
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 // import RefreshIcon from '@material-ui/icons/Refresh';
 // import { BuyIcon, SellIcon } from './icon';
-import { Stock, net } from './api/index';
+import SyncIcon from '@material-ui/icons/Sync';
+import AddIcon from '@material-ui/icons/Add';
+import { Stock, net, IStockExit } from './api/index';
 
 const BUY = 'BUY';
 const SELL = 'SELL';
@@ -33,10 +36,11 @@ type IStockActionType = 'BUY' | 'SELL';
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [allStocks, setAllStocks] = useState<Stock[]>([]);
   const [actionType, setActionType] = useState<IStockActionType | null>(null);
   const [anchor, setAnchor] = useState<null | HTMLButtonElement>(null);
   const [openAlertDialog, setOpenAlertDialog] = useState(false);
-  // const [updateID, setUpdateID] = useState(Math.random());
+  const [showCleared, setShowCleared] = useState(false);
 
   const nameRef: RefObject<any> = useRef(null);
   const codeRef: RefObject<any> = useRef(null);
@@ -46,13 +50,19 @@ export default function Home() {
     net.r(Stock).then(stocks => {
       for (let stock of stocks) {
         stock.setRealtimePrice().then(() => {
-          setStocks(stocks => stocks.concat(stock));
-          // if (stock.glance.share > 0) {
-          // }
+          setAllStocks(stocks => stocks.concat(stock));
         });
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (showCleared) {
+      setStocks(allStocks);
+    } else {
+      setStocks(allStocks.filter(s => s.glance.share > 0));
+    }
+  }, [stocks, showCleared]);
 
   function confirm() {
     const name = nameRef.current.value;
@@ -79,9 +89,9 @@ export default function Home() {
     }
   }
 
-  function updateStock() {
-    stockRef.current?.setRealtimePrice().then(() => {
-      setAnchor(null);
+  function updateStock(stock: Stock) {
+    stock.setRealtimePrice().then(() => {
+      setStocks(stocks => stocks.concat());
     });
   }
 
@@ -96,14 +106,35 @@ export default function Home() {
 
   return (
     <Box m={3}>
-      <Button
-        variant="contained"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        添加追踪股票
-      </Button>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        <Fab
+          color="primary"
+          variant="extended"
+          onClick={() => {
+            setOpen(true);
+          }}
+          size="small"
+        >
+          <AddIcon />
+          添加追踪股票
+        </Fab>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            setShowCleared(!showCleared);
+          }}
+        >
+          {`${showCleared ? '隐藏' : '显示'}已清仓股票`}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            stocks.forEach(stock => updateStock(stock));
+          }}
+        >
+          获取股票价格
+        </Button>
+      </Stack>
       <Menu
         anchorEl={anchor}
         open={anchor !== null}
@@ -111,18 +142,28 @@ export default function Home() {
           setAnchor(null);
         }}
       >
-        <MenuItem onClick={() => setActionType(BUY)}>
+        <MenuItem
+          onClick={() => {
+            setActionType(BUY);
+            setAnchor(null);
+          }}
+        >
           <ListItemText>添加买点</ListItemText>
         </MenuItem>
-        <MenuItem onClick={() => setActionType(SELL)}>
+        <MenuItem
+          onClick={() => {
+            setActionType(SELL);
+            setAnchor(null);
+          }}
+        >
           <ListItemText>添加卖点</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => setOpenAlertDialog(true)}>
           <ListItemText>清仓</ListItemText>
         </MenuItem>
-        <MenuItem onClick={updateStock}>
+        {/* <MenuItem onClick={updateStock}>
           <ListItemText>获取最新价格</ListItemText>
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
       <Box mt={1}>
         {stocks
@@ -134,6 +175,15 @@ export default function Home() {
               <AccordionSummary>
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
                   <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                    <IconButton
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.stopPropagation();
+                        updateStock(stock);
+                      }}
+                      color="primary"
+                    >
+                      <SyncIcon></SyncIcon>
+                    </IconButton>
                     <span>{stock.name}</span>
                     <Chip
                       size="small"
@@ -144,9 +194,9 @@ export default function Home() {
                           : 'error'
                       }
                     />
-                    <Chip 
+                    <Chip
                       size="small"
-                      label={`涨跌幅：${stock.rise}`} 
+                      label={`涨跌幅：${stock.rise}`}
                       color={
                         (stock.lastPrice as number) > (stock.realtimePrice as number)
                           ? 'success'
@@ -227,12 +277,18 @@ export default function Home() {
           </Button>
         </DialogActions>
       </Dialog>
-      <AddPoint type={actionType} onClose={() => setActionType(null)} onAdd={handleAdd} />
+      <AddPoint
+        stock={stockRef.current}
+        type={actionType}
+        onClose={() => setActionType(null)}
+        onAdd={handleAdd}
+      />
     </Box>
   );
 }
 
 function AddPoint(props: {
+  stock: Stock | null;
   type: IStockActionType | null;
   onClose: () => void;
   onAdd: (price: number, share: number) => void;
@@ -253,6 +309,7 @@ function AddPoint(props: {
           margin="normal"
           fullWidth
           label="价格"
+          defaultValue={props.stock?.realtimePrice}
           inputRef={priceRef}
         ></TextField>
         <TextField
@@ -297,7 +354,7 @@ function Points(props: { stock: Stock }) {
         })}
       <Divider sx={{ marginTop: '16px', marginBottom: '16px' }}>卖出</Divider>
       {props.stock.entries
-        .filter(_ => _.share === 0)
+        .reduce((arr: IStockExit[], _) => arr.concat(_.exits || []), [])
         .map((_, i) => {
           return (
             <Badge
@@ -308,10 +365,10 @@ function Points(props: { stock: Stock }) {
             >
               <Chip
                 variant="outlined"
-                color={(_.floatingProfit || 0) > 0 ? 'error' : 'success'}
+                color={(_.profit || 0) > 0 ? 'error' : 'success'}
                 label={`入场价格：${_.price}；${
                   _.share === 0 ? '' : '份额：' + _.share + '；'
-                }盈亏：${_.floatingProfit}`}
+                }盈亏：${_.profit}`}
               />
             </Badge>
           );
