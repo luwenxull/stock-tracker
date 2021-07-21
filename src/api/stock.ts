@@ -5,6 +5,7 @@ export interface IStockExit {
   price: number;
   share: number;
   profit: number;
+  T?: boolean;
 }
 
 export interface IStockEntry {
@@ -12,6 +13,7 @@ export interface IStockEntry {
   price: number;
   floatingProfit?: number;
   exits?: IStockExit[];
+  date?: string;
 }
 
 export interface IStockGlanceResult {
@@ -90,39 +92,59 @@ export class Stock extends API {
     });
   }
 
+  public getAvailableEntries(today = false) {
+    const date = new Date().toLocaleDateString();
+    return this.entries.filter(_ => _.share > 0 && (today ? date === _.date : true));
+  }
+
   public enter(price: number, share: number) {
     this.entries.push({
       price,
       share,
       exits: [],
+      date: new Date().toLocaleDateString(),
     });
     this.entries = this.entries.sort((a, b) => a.price - b.price);
     return this.makeGlance();
   }
 
-  public exit(price: number, share: number) {
-    for (let _ of this.entries) {
-      if (!_.exits) {
-        _.exits = [];
+  public exit(price: number, share: number, entry?: IStockEntry) {
+    if (entry) {
+      if (!entry.exits) {
+        entry.exits = [];
       }
-      if (_.share >= share) {
-        _.share -= share;
-        _.exits.push({
-          price,
-          share,
-          profit: Number(((price - _.price) * share).toFixed(2)),
-        });
-        break;
-      } else if (_.share > 0) {
-        _.exits.push({
-          price,
-          share: _.share,
-          profit: Number(((price - _.price) * _.share).toFixed(2)),
-        });
-        share -= _.share;
-        _.share = 0;
+      entry.exits.push({
+        price,
+        share,
+        profit: Number(((price - entry.price) * share).toFixed(2)),
+        T: true,
+      });
+      entry.share -= share;
+    } else {
+      for (let _ of this.entries) {
+        if (!_.exits) {
+          _.exits = [];
+        }
+        if (_.share >= share) {
+          _.share -= share;
+          _.exits.push({
+            price,
+            share,
+            profit: Number(((price - _.price) * share).toFixed(2)),
+          });
+          break;
+        } else if (_.share > 0) {
+          _.exits.push({
+            price,
+            share: _.share,
+            profit: Number(((price - _.price) * _.share).toFixed(2)),
+          });
+          share -= _.share;
+          _.share = 0;
+        }
       }
     }
+
     return this.makeGlance();
   }
 

@@ -1,0 +1,69 @@
+{
+  "name": "酒ETF",
+  "code": "sh512690",
+  "entries": [
+    {
+      "price": 1.395,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.404,
+          "share": 2500,
+          "profit": 22.5
+        },
+        {
+          "price": 1.408,
+          "share": 2500,
+          "profit": 32.5
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.399,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.415,
+          "share": 2500,
+          "profit": 40
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.403,
+      "share": 4000,
+      "exits": [],
+      "floatingProfit": 8
+    },
+    {
+      "price": 1.406,
+      "share": 4000,
+      "exits": [],
+      "floatingProfit": -4
+    },
+    {
+      "price": 1.413,
+      "share": 4000,
+      "exits": [],
+      "floatingProfit": -32
+    },
+    {
+      "price": 1.418,
+      "share": 8000,
+      "exits": [],
+      "floatingProfit": -104
+    }
+  ],
+  "realtimePrice": "1.405",
+  "lastPrice": "1.414",
+  "rise": "-0.64%",
+  "glance": {
+    "floatingProfit": -37,
+    "share": 20000,
+    "money": 28100,
+    "ratio": -0.13,
+    "costPrice": 1.407
+  }
+}

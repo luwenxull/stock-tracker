@@ -26,7 +26,7 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 // import { BuyIcon, SellIcon } from './icon';
 import SyncIcon from '@material-ui/icons/Sync';
 import AddIcon from '@material-ui/icons/Add';
-import { Stock, net, IStockExit } from './api/index';
+import { Stock, net, IStockExit, IStockEntry } from './api/index';
 
 const BUY = 'BUY';
 const SELL = 'SELL';
@@ -62,7 +62,7 @@ export default function Home() {
     } else {
       setStocks(allStocks.filter(s => s.glance.share > 0));
     }
-  }, [stocks, showCleared]);
+  }, [allStocks, showCleared]);
 
   function confirm() {
     const name = nameRef.current.value;
@@ -77,12 +77,12 @@ export default function Home() {
     setOpen(false);
   }
 
-  function handleAdd(price: number, share: number) {
+  function handleAdd(price: number, share: number, entry?: IStockEntry) {
     if (actionType !== null && stockRef.current !== null) {
       if (actionType === BUY) {
         stockRef.current.enter(price, share);
       } else {
-        stockRef.current.exit(price, share);
+        stockRef.current.exit(price, share, entry);
       }
       net.u(Stock, stockRef.current);
       setActionType(null);
@@ -291,19 +291,39 @@ function AddPoint(props: {
   stock: Stock | null;
   type: IStockActionType | null;
   onClose: () => void;
-  onAdd: (price: number, share: number) => void;
+  onAdd: (price: number, share: number, entry?: IStockEntry) => void;
 }) {
   const priceRef = useRef<any>();
   const shareRef = useRef<any>();
+  const entry = useRef<IStockEntry>();
+  const [share, setShare] = useState('100');
 
   function confirm() {
-    props.onAdd(priceRef.current.value * 1, shareRef.current.value * 1);
+    props.onAdd(priceRef.current.value * 1, shareRef.current.value * 1, entry.current);
   }
 
   return (
-    <Dialog open={props.type !== null}>
+    <Dialog open={props.type !== null} maxWidth="xs" fullWidth>
       <DialogTitle>{`添加${props.type === BUY ? '买' : '卖'}点`}</DialogTitle>
       <DialogContent>
+        {props.type === SELL
+          ? props.stock?.getAvailableEntries(true).map(_ => {
+              return (
+                <Chip
+                  onClick={() => {
+                    entry.current = _;
+                    shareRef.current.value = _.share;
+                  }}
+                  size="small"
+                  label={`${_.price} * ${_.share}`}
+                  sx={{
+                    marginRight: '8px',
+                    marginBottom: '8px',
+                  }}
+                />
+              );
+            })
+          : null}
         <TextField
           size="small"
           margin="normal"
@@ -311,14 +331,18 @@ function AddPoint(props: {
           label="价格"
           defaultValue={props.stock?.realtimePrice}
           inputRef={priceRef}
-        ></TextField>
+        />
         <TextField
+          onChange={e => {
+            setShare(e.target.value);
+          }}
           size="small"
           margin="normal"
           fullWidth
           label="份额"
           inputRef={shareRef}
-        ></TextField>
+          value={share}
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onClose}>取消</Button>
@@ -337,7 +361,8 @@ function Points(props: { stock: Stock }) {
         .map((_, i) => {
           return (
             <Badge
-              badgeContent={0}
+              badgeContent={_.date ? _.date : 0}
+              overlap="rectangular"
               color="primary"
               key={i}
               sx={{ marginRight: '12px', marginTop: '8px' }}
@@ -358,7 +383,7 @@ function Points(props: { stock: Stock }) {
         .map((_, i) => {
           return (
             <Badge
-              badgeContent={0}
+              badgeContent={_.T ? 'T' : 0}
               color="primary"
               key={i}
               sx={{ marginRight: '12px', marginTop: '8px' }}
