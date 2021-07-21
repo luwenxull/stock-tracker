@@ -129,10 +129,10 @@ export default function Home() {
         <Button
           variant="outlined"
           onClick={() => {
-            stocks.forEach(stock => updateStock(stock));
+            stocks.forEach(updateStock);
           }}
         >
-          获取股票价格
+          更新股票价格
         </Button>
       </Stack>
       <Menu
@@ -353,6 +353,7 @@ function AddPoint(props: {
 }
 
 function Points(props: { stock: Stock }) {
+  const date = new Date().toLocaleDateString();
   return (
     <Box sx={{ flexWrap: 'wrap' }}>
       <Divider sx={{ marginBottom: '16px' }}>持仓</Divider>
@@ -361,7 +362,7 @@ function Points(props: { stock: Stock }) {
         .map((_, i) => {
           return (
             <Badge
-              badgeContent={_.date ? _.date : 0}
+              badgeContent={_.date === date ? '当日' : 0}
               overlap="rectangular"
               color="primary"
               key={i}
