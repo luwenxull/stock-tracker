@@ -378,26 +378,30 @@ function Points(props: { stock: Stock }) {
           );
         })}
       <Divider sx={{ marginTop: '16px', marginBottom: '16px' }}>卖出</Divider>
-      {props.stock.entries
-        .reduce((arr: IStockExit[], _) => arr.concat(_.exits || []), [])
-        .map((_, i) => {
-          return (
-            <Badge
-              badgeContent={_.T ? 'T' : 0}
-              color="primary"
-              key={i}
-              sx={{ marginRight: '12px', marginTop: '8px' }}
-            >
-              <Chip
-                variant="outlined"
-                color={(_.profit || 0) > 0 ? 'error' : 'success'}
-                label={`入场价格：${_.price}；${
-                  _.share === 0 ? '' : '份额：' + _.share + '；'
-                }盈亏：${_.profit}`}
-              />
-            </Badge>
-          );
-        })}
+      {props.stock.entries.map((entry, i) => {
+        return (
+          <>
+            {entry.exits?.map((_, j) => {
+              return (
+                <Badge
+                  badgeContent={_.T ? 'T' : 0}
+                  color="primary"
+                  key={i + '' + j}
+                  sx={{ marginRight: '12px', marginTop: '8px' }}
+                >
+                  <Chip
+                    variant="outlined"
+                    color={(_.profit || 0) > 0 ? 'error' : 'success'}
+                    label={`差价：${(_.price - entry.price).toFixed(3)}；${
+                      _.share === 0 ? '' : '份额：' + _.share + '；'
+                    }盈亏：${_.profit}`}
+                  />
+                </Badge>
+              );
+            })}
+          </>
+        );
+      })}
     </Box>
   );
 }
