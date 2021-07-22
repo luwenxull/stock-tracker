@@ -24,7 +24,14 @@ export interface IStockGlanceResult {
   costPrice: number;
 }
 
-export class Stock extends API {
+interface IStockCodable {
+  entries: IStockEntry[];
+  code: string;
+}
+
+export class Stock extends API<{ id: string }, IStockCodable> {
+  public path = '/stock/:id';
+  public name = '';
   public entries: IStockEntry[] = [];
   public realtimePrice?: number;
   public lastPrice?: number;
@@ -85,6 +92,7 @@ export class Stock extends API {
         this.realtimePrice = values[3];
         this.lastPrice = values[2];
         this.rise = (((values[3] - values[2]) / values[2]) * 100).toFixed(2) + '%';
+        this.name = values[0];
         this.makeGlance();
         resolve(this);
       };
@@ -148,9 +156,22 @@ export class Stock extends API {
     return this.makeGlance();
   }
 
-  static path = '/stock';
+  public encode(): IStockCodable {
+    return {
+      code: this.code,
+      entries: this.entries,
+    };
+  }
 
-  static decode(item: Stock) {
-    return Object.assign(new Stock('', ''), item);
+  public decode(item: IStockCodable) {
+    return Object.assign(this, item);
+  }
+
+  public defaultParams(): { id: string } {
+    return { id: this.code };
+  }
+
+  static empty(): Stock {
+    return new Stock('');
   }
 }

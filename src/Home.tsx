@@ -1,4 +1,4 @@
-import React, { MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
+import React, { Fragment, MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
 import {
   Divider,
   Stack,
@@ -26,7 +26,7 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 // import { BuyIcon, SellIcon } from './icon';
 import SyncIcon from '@material-ui/icons/Sync';
 import AddIcon from '@material-ui/icons/Add';
-import { Stock, net, IStockExit, IStockEntry } from './api/index';
+import { Stock, IStockExit, IStockEntry } from './api/index';
 
 const BUY = 'BUY';
 const SELL = 'SELL';
@@ -47,13 +47,26 @@ export default function Home() {
   const stockRef: MutableRefObject<null | Stock> = useRef(null);
 
   useEffect(() => {
-    net.r(Stock).then(stocks => {
-      for (let stock of stocks) {
-        stock.setRealtimePrice().then(() => {
-          setAllStocks(stocks => stocks.concat(stock));
-        });
-      }
-    });
+    // net.r(Stock).then(stocks => {
+    //   for (let stock of stocks) {
+    //     stock.setRealtimePrice().then(() => {
+    //       setAllStocks(stocks => stocks.concat(stock));
+    //     });
+    //   }
+    // });
+    // sto
+    Stock.empty()
+      .r({ id: '' })
+      .then(stocks => {
+        return stocks.map(_ => Stock.empty().decode(_));
+      })
+      .then(stocks => {
+        for (let stock of stocks) {
+          stock.setRealtimePrice().then(() => {
+            setAllStocks(stocks => stocks.concat(stock));
+          });
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -65,11 +78,10 @@ export default function Home() {
   }, [allStocks, showCleared]);
 
   function confirm() {
-    const name = nameRef.current.value;
     const code = codeRef.current.value;
-    const stock = new Stock(name, code);
-    net
-      .c(Stock, stock)
+    const stock = new Stock(code);
+    stock
+      .c()
       .then(() => stock.setRealtimePrice())
       .then(() => {
         setStocks(stocks => stocks.concat(stock));
@@ -84,7 +96,7 @@ export default function Home() {
       } else {
         stockRef.current.exit(price, share, entry);
       }
-      net.u(Stock, stockRef.current);
+      stockRef.current.u();
       setActionType(null);
     }
   }
@@ -98,9 +110,9 @@ export default function Home() {
   function clear() {
     if (stockRef.current) {
       stockRef.current.clear();
+      stockRef.current.u();
       setAnchor(null);
       setOpenAlertDialog(false);
-      net.u(Stock, stockRef.current);
     }
   }
 
@@ -236,20 +248,7 @@ export default function Home() {
       <Dialog open={open} maxWidth="xs" fullWidth>
         <DialogTitle>添加追踪股票</DialogTitle>
         <DialogContent>
-          <TextField
-            label="股票名称"
-            fullWidth
-            size="small"
-            margin="normal"
-            inputRef={nameRef}
-          ></TextField>
-          <TextField
-            label="股票代码"
-            fullWidth
-            size="small"
-            margin="normal"
-            inputRef={codeRef}
-          ></TextField>
+          <TextField label="股票代码" fullWidth size="small" margin="normal" inputRef={codeRef} />
         </DialogContent>
         <DialogActions>
           <Button
@@ -294,12 +293,11 @@ function AddPoint(props: {
   onAdd: (price: number, share: number, entry?: IStockEntry) => void;
 }) {
   const priceRef = useRef<any>();
-  const shareRef = useRef<any>();
   const entry = useRef<IStockEntry>();
-  const [share, setShare] = useState('100');
+  const [share, setShare] = useState(100);
 
   function confirm() {
-    props.onAdd(priceRef.current.value * 1, shareRef.current.value * 1, entry.current);
+    props.onAdd(priceRef.current.value * 1, share, entry.current);
   }
 
   return (
@@ -312,7 +310,7 @@ function AddPoint(props: {
                 <Chip
                   onClick={() => {
                     entry.current = _;
-                    shareRef.current.value = _.share;
+                    setShare(_.share);
                   }}
                   size="small"
                   label={`${_.price} * ${_.share}`}
@@ -334,13 +332,12 @@ function AddPoint(props: {
         />
         <TextField
           onChange={e => {
-            setShare(e.target.value);
+            setShare(Number(e.target.value));
           }}
           size="small"
           margin="normal"
           fullWidth
           label="份额"
-          inputRef={shareRef}
           value={share}
         />
       </DialogContent>
@@ -381,13 +378,13 @@ function Points(props: { stock: Stock }) {
       <Divider sx={{ marginTop: '16px', marginBottom: '16px' }}>卖出</Divider>
       {props.stock.entries.map((entry, i) => {
         return (
-          <>
+          <Fragment key={i}>
             {entry.exits?.map((_, j) => {
               return (
                 <Badge
                   badgeContent={_.T ? 'T' : 0}
                   color="primary"
-                  key={i + '' + j}
+                  key={j}
                   sx={{ marginRight: '12px', marginTop: '8px' }}
                 >
                   <Chip
@@ -400,7 +397,7 @@ function Points(props: { stock: Stock }) {
                 </Badge>
               );
             })}
-          </>
+          </Fragment>
         );
       })}
     </Box>

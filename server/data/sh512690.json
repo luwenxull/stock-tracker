@@ -1,0 +1,92 @@
+{
+  "code": "sh512690",
+  "entries": [
+    {
+      "price": 1.395,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.404,
+          "share": 2500,
+          "profit": 22.5
+        },
+        {
+          "price": 1.408,
+          "share": 2500,
+          "profit": 32.5
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.399,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.415,
+          "share": 2500,
+          "profit": 40
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.403,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.42,
+          "share": 4000,
+          "profit": 68
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.406,
+      "share": 0,
+      "exits": [
+        {
+          "price": 1.414,
+          "share": 4000,
+          "profit": 32,
+          "T": true
+        }
+      ],
+      "floatingProfit": 0
+    },
+    {
+      "price": 1.406,
+      "share": 2500,
+      "exits": [],
+      "date": "2021/7/22",
+      "floatingProfit": -42.5
+    },
+    {
+      "price": 1.41,
+      "share": 2500,
+      "exits": [],
+      "date": "2021/7/22",
+      "floatingProfit": -52.5
+    },
+    {
+      "price": 1.413,
+      "share": 2700,
+      "exits": [
+        {
+          "price": 1.42,
+          "share": 1300,
+          "profit": 9.1
+        }
+      ],
+      "floatingProfit": -64.8
+    },
+    {
+      "price": 1.418,
+      "share": 8000,
+      "exits": [],
+      "floatingProfit": -232,
+      "date": "2021/7/21"
+    }
+  ]
+}
